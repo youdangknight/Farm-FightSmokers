@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fight Smoker Legacy Wallet Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+    <style>
+      :root {
+        --bg-top: #f7f0d8;
+        --bg-bottom: #d6f0df;
+        --panel: rgba(255, 252, 244, 0.92);
+        --text: #244034;
+        --muted: #5e746b;
+        --accent: #ff8f3d;
+        --accent-deep: #db6f24;
+        --leaf: #2f8f5b;
+        --leaf-soft: #dff4e7;
+        --danger: #cc5b42;
+        --water: #1d5c63;
+        --violet: #6b4fa1;
+        --shadow: 0 18px 45px rgba(70, 92, 69, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(255, 221, 167, 0.8), transparent 35%),
+          radial-gradient(circle at 85% 18%, rgba(153, 220, 179, 0.72), transparent 25%),
+          linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      }
+
+      .page {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      .hero,
+      .panel,
+      .toast {
+        background: var(--panel);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        padding: 28px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -30px -40px auto;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255, 143, 61, 0.16);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 1.08;
+      }
+
+      .hero-copy {
+        margin-top: 12px;
+        color: var(--muted);
+        line-height: 1.7;
+        max-width: 760px;
+      }
+
+      .hero-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+
+      .card {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .metric-label {
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .metric-value {
+        margin-top: 8px;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--accent-deep);
+      }
+
+      .inventory-list,
+      .log-list,
+      .field-list,
+      .button-list,
+      .shelf {
+        display: grid;
+        gap: 12px;
+      }
+
+      .inventory-item,
+      .log-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .section {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 20px;
+      }
+
+      .panel {
+        padding: 22px;
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+
+      .panel-copy {
+        color: var(--muted);
+        line-height: 1.65;
+        margin-bottom: 16px;
+      }
+
+      .shelf {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .product-card {
+        position: relative;
+        overflow: hidden;
+        padding: 22px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.74);
+        box-shadow: inset 0 0 0 1px rgba(47, 143, 91, 0.08);
+      }
+
+      .product-card::before {
+        content: "";
+        position: absolute;
+        inset: -40px auto auto -20px;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(47, 143, 91, 0.08);
+      }
+
+      .product-tag {
+        position: relative;
+        width: fit-content;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: var(--leaf-soft);
+        color: var(--leaf);
+        font-size: 0.88rem;
+        font-weight: 700;
+      }
+
+      .product-title {
+        position: relative;
+        margin-top: 14px;
+        font-size: 1.3rem;
+        font-weight: 800;
+      }
+
+      .product-desc {
+        position: relative;
+        margin-top: 12px;
+        min-height: 74px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .price {
+        position: relative;
+        margin-top: 14px;
+        font-weight: 800;
+        color: var(--accent-deep);
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        font: inherit;
+        padding: 12px 18px;
+        font-weight: 700;
+        transition: transform 0.18s ease, opacity 0.18s ease;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.52;
+        transform: none;
+      }
+
+      .reward-btn {
+        background: linear-gradient(135deg, var(--leaf), #4cad72);
+        color: #fff;
+      }
+
+      .buy-btn {
+        width: 100%;
+        margin-top: 16px;
+        background: linear-gradient(135deg, var(--accent), #ffb25e);
+        color: #fff;
+      }
+
+      .wallet-btn {
+        background: #9c6b00;
+        color: #fff;
+      }
+
+      .ghost-btn {
+        background: #fff;
+        color: var(--leaf);
+        box-shadow: inset 0 0 0 1px rgba(47, 143, 91, 0.18);
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .field input,
+      .field textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cfd7c9;
+        border-radius: 10px;
+        font: inherit;
+        background: rgba(255, 255, 255, 0.92);
+      }
+
+      .field textarea {
+        min-height: 96px;
+        resize: vertical;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef7f0;
+        color: var(--leaf);
+        font-weight: 700;
+      }
+
+      .status-pill.warn {
+        background: #fff1eb;
+        color: var(--danger);
+      }
+
+      .tiny,
+      .network-info,
+      .status-text {
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        width: min(360px, calc(100% - 36px));
+        padding: 18px 20px;
+        border-left: 6px solid var(--leaf);
+        opacity: 0;
+        transform: translateY(20px);
+        pointer-events: none;
+        transition: opacity 0.22s ease, transform 0.22s ease;
+        z-index: 30;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .reward-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(36, 64, 52, 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.22s ease;
+        z-index: 34;
+      }
+
+      .reward-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .reward-display {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        width: min(320px, calc(100% - 40px));
+        padding: 20px;
+        border-radius: 28px;
+        background: rgba(255, 252, 244, 0.97);
+        box-shadow: 0 22px 48px rgba(70, 92, 69, 0.2);
+        transform: translate(-50%, -50%) scale(0.92);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.22s ease, transform 0.22s ease;
+        z-index: 35;
+        text-align: center;
+      }
+
+      .reward-display.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .reward-image {
+        width: 100%;
+        max-width: 220px;
+        aspect-ratio: 1 / 1;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto 12px;
+      }
+
+      .reward-name {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--accent-deep);
+      }
+
+      .reward-copy {
+        margin-top: 8px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid,
+        .section {
+          grid-template-columns: 1fr;
+        }
+
+        .page {
+          width: min(100% - 24px, 1120px);
+          padding-top: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <h1>Fight Smoker Legacy Wallet Demo</h1>
+        <p class="hero-copy">
+          这是旧版独立钱包演示页，保留给开发联调和历史参考使用。正式展示请以 integrated demo 为主，并在配置文件中显式填写合约地址与钱包参数。
+        </p>
+
+        <div class="hero-grid">
+          <aside class="card">
+            <div class="metric-label">玩家余额 / Player Balance</div>
+            <div class="metric-value" id="walletAmount">-</div>
+            <p class="tiny">后端内存余额，演示时从 `/balance` 同步。</p>
+          </aside>
+
+          <aside class="card">
+            <div class="metric-label">Treasury</div>
+            <div class="metric-value" id="treasuryAmount">-</div>
+            <p class="tiny">购买成功后进入系统金库。</p>
+          </aside>
+
+          <aside class="card">
+            <div class="metric-label">已拥有道具</div>
+            <div class="inventory-list">
+              <div class="inventory-item">
+                <span>普通柚子叶</span>
+                <strong id="leafCount">0</strong>
+              </div>
+              <div class="inventory-item">
+                <span>超级柚子喷雾</span>
+                <strong id="sprayCount">0</strong>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Legacy Flow Preview</h2>
+            <button class="reward-btn" id="rewardButton" type="button">Report 1 Cigarette</button>
+          </div>
+          <p class="panel-copy">
+            这是历史联调流程示意页面，仅保留基础购买与余额回写逻辑。未填写配置时，页面会保持占位展示。
+          </p>
+          <div class="shelf" id="shelf"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Fuji 钱包配置</h2>
+            <button class="wallet-btn" id="connectWalletButton" type="button">Connect Wallet</button>
+          </div>
+
+          <div class="field-list">
+            <div class="field">
+              <label>Contract Address</label>
+              <p class="tiny" id="contractAddressText"></p>
+            </div>
+
+            <div class="field">
+              <label for="userAddress">User Address</label>
+              <input id="userAddress" placeholder="0x..." />
+            </div>
+
+            <div class="field">
+              <label for="reportId">Report ID</label>
+              <input id="reportId" value="report-123" />
+            </div>
+          </div>
+
+          <div class="button-list">
+            <button class="ghost-btn" id="resetButton" type="button">Reset Demo</button>
+          </div>
+
+          <p class="tiny">
+            `rewardUser(address, score, reportId)` 不再由玩家页面触发。按当前架构，它应由 Lae 的后端或管理员钱包调用。
+          </p>
+          <p class="network-info" id="networkInfo">Target network: Avalanche Fuji Testnet</p>
+          <p class="status-text" id="status">Waiting for action.</p>
+          <p class="status-pill" id="paymentStatus">Idle</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>交接状态</h2>
+          </div>
+          <p class="status-text" id="handoffMessage">玩家还没下单，商店正在等待。</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>商场流水</h2>
+          </div>
+          <div class="log-list" id="logList"></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <h3 id="toastTitle">购买成功</h3>
+      <p id="toastText">你获得了新的道具。</p>
+    </div>
+
+    <div class="reward-backdrop" id="rewardBackdrop"></div>
+    <div class="reward-display" id="rewardDisplay" role="dialog" aria-live="polite" aria-label="获得道具">
+      <img class="reward-image" id="rewardImage" alt="" />
+      <h3 class="reward-name" id="rewardName"></h3>
+      <p class="reward-copy" id="rewardCopy"></p>
+    </div>
+
+    <script>
+      const DEFAULT_CONTRACT_ADDRESS = window.DEMO_CONTRACT_ADDRESS || '';
+      const DEFAULT_ABI = [
+        'function owner() view returns (address)',
+        'function treasury() view returns (uint256)',
+        'function INITIAL_OWNER_BALANCE() view returns (uint256)',
+        'function INITIAL_PLAYER_BALANCE() view returns (uint256)',
+        'function SEED_UNIT_PRICE() view returns (uint256)',
+        'function playerBalances(address) view returns (uint256)',
+        'function initializedPlayers(address) view returns (bool)',
+        'function processedReports(bytes32) view returns (bool)',
+        'function rewardUser(address user, uint256 score, string reportId) external',
+        'function buySeeds(uint256 amount) external',
+        'function getBalance(address user) view returns (uint256 playerBalance, uint256 treasuryBalance)',
+        'function transferOwnership(address newOwner) external',
+      ];
+
+      const products = [
+        {
+          id: 'pomelo-leaf',
+          name: '普通柚子叶',
+          price: 3,
+          chainAmount: 3,
+          emoji: '🍃',
+          label: '按钮 A',
+          description: '基础净化道具，售价 3 代币，链上购买时调用 buySeeds(3)。',
+          image:
+            'data:image/svg+xml;utf8,' +
+            encodeURIComponent(`
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                <defs>
+                  <linearGradient id="bgLeaf" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#fff7df"/>
+                    <stop offset="100%" stop-color="#daf3dd"/>
+                  </linearGradient>
+                  <linearGradient id="leafMain" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#88d26f"/>
+                    <stop offset="100%" stop-color="#2f8f5b"/>
+                  </linearGradient>
+                </defs>
+                <rect width="240" height="240" rx="48" fill="url(#bgLeaf)"/>
+                <circle cx="190" cy="52" r="24" fill="#ffe4a8"/>
+                <path d="M119 193c-36-28-62-71-62-102 0-27 18-46 45-46 22 0 40 12 52 30 13-16 30-24 47-24 26 0 42 18 42 42 0 39-34 80-124 100Z" fill="url(#leafMain)"/>
+                <path d="M119 193c-13-51-10-95 12-132" stroke="#e9ffd8" stroke-width="6" stroke-linecap="round" fill="none"/>
+              </svg>
+            `),
+        },
+        {
+          id: 'super-spray',
+          name: '超级柚子喷雾',
+          price: 5,
+          chainAmount: 5,
+          emoji: '🫧',
+          label: '按钮 B',
+          description: '高能净化喷雾，售价 5 代币，链上购买时调用 buySeeds(5)，演示更明显。',
+          image:
+            'data:image/svg+xml;utf8,' +
+            encodeURIComponent(`
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                <defs>
+                  <linearGradient id="bgSpray" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#fff5df"/>
+                    <stop offset="100%" stop-color="#dff6f3"/>
+                  </linearGradient>
+                  <linearGradient id="bottle" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ffe58c"/>
+                    <stop offset="100%" stop-color="#ff9f43"/>
+                  </linearGradient>
+                </defs>
+                <rect width="240" height="240" rx="48" fill="url(#bgSpray)"/>
+                <circle cx="182" cy="64" r="20" fill="#d7f5ff"/>
+                <rect x="92" y="47" width="56" height="24" rx="8" fill="#3b5f61"/>
+                <rect x="108" y="34" width="24" height="19" rx="5" fill="#243f34"/>
+                <path d="M83 74h74v102c0 18-14 32-32 32h-10c-18 0-32-14-32-32V74Z" fill="url(#bottle)"/>
+              </svg>
+            `),
+        },
+      ];
+
+      const initialState = {
+        playerBalance: 10,
+        treasury: 0,
+        inventory: {
+          'pomelo-leaf': 0,
+          'super-spray': 0,
+        },
+        paymentStatus: 'idle',
+        handoffMessage: '玩家还没下单，商店正在等待。',
+        logs: ['商场已开门：等待玩家挑选道具。'],
+      };
+
+      const state = structuredClone(initialState);
+
+      const FUJI_CHAIN_ID = '0xa869';
+      const FUJI_NETWORK = {
+        chainId: FUJI_CHAIN_ID,
+        chainName: 'Avalanche Fuji C-Chain',
+        nativeCurrency: {
+          name: 'AVAX',
+          symbol: 'AVAX',
+          decimals: 18,
+        },
+        rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
+        blockExplorerUrls: ['https://subnets-test.avax.network/c-chain'],
+      };
+
+      const els = {
+        walletAmount: document.getElementById('walletAmount'),
+        treasuryAmount: document.getElementById('treasuryAmount'),
+        leafCount: document.getElementById('leafCount'),
+        sprayCount: document.getElementById('sprayCount'),
+        rewardButton: document.getElementById('rewardButton'),
+        connectWalletButton: document.getElementById('connectWalletButton'),
+        resetButton: document.getElementById('resetButton'),
+        contractAddressText: document.getElementById('contractAddressText'),
+        userAddress: document.getElementById('userAddress'),
+        reportId: document.getElementById('reportId'),
+        networkInfo: document.getElementById('networkInfo'),
+        status: document.getElementById('status'),
+        paymentStatus: document.getElementById('paymentStatus'),
+        handoffMessage: document.getElementById('handoffMessage'),
+        shelf: document.getElementById('shelf'),
+        logList: document.getElementById('logList'),
+        toast: document.getElementById('toast'),
+        toastTitle: document.getElementById('toastTitle'),
+        toastText: document.getElementById('toastText'),
+        rewardBackdrop: document.getElementById('rewardBackdrop'),
+        rewardDisplay: document.getElementById('rewardDisplay'),
+        rewardImage: document.getElementById('rewardImage'),
+        rewardName: document.getElementById('rewardName'),
+        rewardCopy: document.getElementById('rewardCopy'),
+      };
+
+      els.contractAddressText.textContent = DEFAULT_CONTRACT_ADDRESS || 'Legacy demo: please set window.DEMO_CONTRACT_ADDRESS';
+
+      let signer;
+      let toastTimer = null;
+      let rewardTimer = null;
+
+      function addLog(text) {
+        const timestamp = new Date().toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        });
+        state.logs.unshift(`[${timestamp}] ${text}`);
+        state.logs = state.logs.slice(0, 8);
+      }
+
+      function showToast(title, text) {
+        els.toastTitle.textContent = title;
+        els.toastText.textContent = text;
+        els.toast.classList.add('show');
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => {
+          els.toast.classList.remove('show');
+        }, 2600);
+      }
+
+      function showReward(product) {
+        els.rewardImage.src = product.image;
+        els.rewardImage.alt = product.name;
+        els.rewardName.textContent = product.name;
+        els.rewardCopy.textContent = '购买成功，新的道具已经加入你的手中。';
+        els.rewardBackdrop.classList.add('show');
+        els.rewardDisplay.classList.add('show');
+
+        window.clearTimeout(rewardTimer);
+        rewardTimer = window.setTimeout(hideReward, 2600);
+      }
+
+      function hideReward() {
+        els.rewardBackdrop.classList.remove('show');
+        els.rewardDisplay.classList.remove('show');
+      }
+
+      function getProductById(productId) {
+        return products.find((item) => item.id === productId) || null;
+      }
+
+      function setStatus(text) {
+        els.status.textContent = text;
+      }
+
+      function renderLogs() {
+        els.logList.innerHTML = '';
+        state.logs.forEach((log) => {
+          const item = document.createElement('div');
+          item.className = 'log-item';
+          item.textContent = log;
+          els.logList.appendChild(item);
+        });
+      }
+
+      function renderShelf() {
+        els.shelf.innerHTML = '';
+
+        products.forEach((product) => {
+          const enoughMoney = state.playerBalance >= product.price;
+          const disabled = state.paymentStatus === 'processing' || !enoughMoney;
+
+          const card = document.createElement('article');
+          card.className = 'product-card';
+
+          const tag = document.createElement('div');
+          tag.className = 'product-tag';
+          tag.textContent = product.label;
+
+          const title = document.createElement('h3');
+          title.className = 'product-title';
+          title.textContent = `${product.emoji} ${product.name}`;
+
+          const desc = document.createElement('p');
+          desc.className = 'product-desc';
+          desc.textContent = product.description;
+
+          const price = document.createElement('div');
+          price.className = 'price';
+          price.textContent = `售价：${product.price}`;
+
+          const button = document.createElement('button');
+          button.className = 'buy-btn';
+          button.type = 'button';
+          button.disabled = disabled;
+          button.textContent = enoughMoney ? '钱包购买商品' : '余额不足';
+          button.addEventListener('click', () => {
+            purchaseProduct(product.id);
+          });
+
+          card.append(tag, title, desc, price, button);
+          els.shelf.appendChild(card);
+        });
+      }
+
+      function render() {
+        els.walletAmount.textContent = String(state.playerBalance);
+        els.treasuryAmount.textContent = String(state.treasury);
+        els.leafCount.textContent = String(state.inventory['pomelo-leaf']);
+        els.sprayCount.textContent = String(state.inventory['super-spray']);
+        els.handoffMessage.textContent = state.handoffMessage;
+        els.paymentStatus.textContent = state.paymentStatus;
+        els.paymentStatus.className =
+          state.paymentStatus === 'failed' ? 'status-pill warn' : 'status-pill';
+        renderShelf();
+        renderLogs();
+      }
+
+      async function fetchBalance() {
+        const response = await fetch('/balance');
+        const data = await response.json();
+        state.playerBalance = data.playerBalance;
+        state.treasury = data.treasury;
+        render();
+      }
+
+      async function postJson(url, body) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Request failed');
+        }
+
+        return data;
+      }
+
+      async function ensureFujiNetwork() {
+        if (!window.ethereum) {
+          throw new Error('Wallet not found');
+        }
+
+        const currentChainId = await window.ethereum.request({
+          method: 'eth_chainId',
+        });
+
+        if (currentChainId === FUJI_CHAIN_ID) {
+          els.networkInfo.textContent = 'Connected network: Avalanche Fuji Testnet';
+          return;
+        }
+
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: FUJI_CHAIN_ID }],
+          });
+        } catch (error) {
+          if (error.code !== 4902) {
+            throw error;
+          }
+
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [FUJI_NETWORK],
+          });
+        }
+
+        els.networkInfo.textContent = 'Connected network: Avalanche Fuji Testnet';
+      }
+
+      async function connectWallet() {
+        if (!window.ethereum) {
+          throw new Error('Wallet not found');
+        }
+
+        await ensureFujiNetwork();
+
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        signer = await provider.getSigner();
+
+        if (!els.userAddress.value) {
+          els.userAddress.value = await signer.getAddress();
+        }
+      }
+
+      function getContract() {
+        if (!signer) {
+          throw new Error('Connect wallet first');
+        }
+
+        return new ethers.Contract(DEFAULT_CONTRACT_ADDRESS, DEFAULT_ABI, signer);
+      }
+
+      async function handleReward() {
+        setStatus('Rewarding player...');
+
+        try {
+          const cigaretteCount = 1;
+          const data = await postJson('/reward', { cigaretteCount });
+          state.playerBalance = data.playerBalance;
+          state.treasury = data.treasury;
+          state.paymentStatus = 'idle';
+          state.handoffMessage = `Being 传来 ${data.cigaretteCount} 个烟头，Lae 发放 ${data.reward} 个代币。`;
+          addLog(`玩家完成烟雾上报，Being 传来 ${data.cigaretteCount} 个烟头，Lae 发放 ${data.reward} 个代币。`);
+          render();
+          showToast('奖励到账', `玩家余额已增加 ${data.reward}。`);
+          setStatus('Reward added to backend balance.');
+        } catch (error) {
+          state.paymentStatus = 'failed';
+          render();
+          setStatus(error.message);
+        }
+      }
+
+      async function purchaseProduct(productId) {
+        const product = getProductById(productId);
+        if (!product) {
+          return;
+        }
+
+        state.paymentStatus = 'processing';
+        state.handoffMessage = `玩家点击购买「${product.name}」，正在准备钱包结账。`;
+        addLog(`玩家点击购买「${product.name}」，准备发起 Fuji 钱包交易。`);
+        render();
+        setStatus('Preparing wallet transaction...');
+
+        try {
+          await ensureFujiNetwork();
+          const contract = getContract();
+
+          const tx = await contract.buySeeds(BigInt(product.chainAmount));
+          setStatus(`buySeeds tx sent: ${tx.hash}`);
+          addLog(`Fuji 交易已发出：buySeeds(${product.chainAmount})。`);
+          await tx.wait();
+          addLog(`Fuji 交易已确认：${tx.hash}`);
+
+          const balanceData = await postJson('/purchase', { price: product.price });
+          state.playerBalance = balanceData.playerBalance;
+          state.treasury = balanceData.treasury;
+          state.inventory[product.id] += 1;
+          state.paymentStatus = 'success';
+          state.handoffMessage = `玩家买了一个${product.name}，Norman 接住！`;
+          addLog(`Lae 结账成功，系统 treasury 增加 ${product.price}。`);
+          showToast('购买成功', `你获得了「${product.name}」。`);
+          showReward(product);
+          render();
+          setStatus(`Transaction confirmed: ${tx.hash}`);
+        } catch (error) {
+          state.paymentStatus = 'failed';
+          state.handoffMessage = `购买失败：${error.message}`;
+          addLog(`购买失败：${error.message}`);
+          render();
+          showToast('购买失败', error.message);
+          setStatus(error.message);
+        }
+      }
+
+      function resetDemo() {
+        Object.assign(state, structuredClone(initialState));
+        hideReward();
+        addLog('演示状态已重置。');
+        render();
+        fetchBalance().catch(() => {});
+      }
+
+      els.rewardBackdrop.addEventListener('click', hideReward);
+
+      els.rewardButton.addEventListener('click', () => {
+        handleReward();
+      });
+
+      els.connectWalletButton.addEventListener('click', async () => {
+        setStatus('Connecting wallet...');
+
+        try {
+          await connectWallet();
+          setStatus('Wallet connected.');
+          addLog('钱包已连接，当前目标网络为 Avalanche Fuji Testnet。');
+        } catch (error) {
+          setStatus(error.message);
+        }
+      });
+
+      els.resetButton.addEventListener('click', resetDemo);
+
+      if (window.ethereum) {
+        window.ethereum.on('chainChanged', (chainId) => {
+          els.networkInfo.textContent =
+            chainId === FUJI_CHAIN_ID
+              ? 'Connected network: Avalanche Fuji Testnet'
+              : `Wrong network: ${chainId}. Switch to Avalanche Fuji Testnet.`;
+        });
+      }
+
+      fetchBalance()
+        .then(() => {
+          addLog('已从后端同步玩家余额。');
+          render();
+        })
+        .catch(() => {
+          setStatus('Failed to load backend balance.');
+          render();
+        });
+    </script>
+    <script src="./config.js"></script>
+  </body>
+</html>

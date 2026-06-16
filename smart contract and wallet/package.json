@@ -1,0 +1,21 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "owner:check": "node scripts/check-owner.js",
+    "owner:transfer": "node scripts/transfer-ownership.js",
+    "reward:user": "node scripts/reward-user.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "express": "^5.2.1"
+  }
+}

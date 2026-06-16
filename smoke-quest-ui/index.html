@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fight Smoker</title>
+    <script src="./vendor/ethers/ethers.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&family=ZCOOL+KuaiLe&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero-panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Fight Smoker</p>
+          <h1>怒拍烟头，狂赚金币，消灭烟鬼。</h1>
+          <div class="hero-team">
+            <p class="hero-text hero-text--rainbow">项目成员闪亮登场</p>
+            <div class="team-parade" aria-label="项目成员">
+              <span class="team-buddy buddy-1"><span class="team-emoji">🧙</span><span>Lae</span></span>
+              <span class="team-buddy buddy-2"><span class="team-emoji">👾</span><span>Being</span></span>
+              <span class="team-buddy buddy-3"><span class="team-emoji">🐣</span><span>小欧</span></span>
+              <span class="team-buddy buddy-4"><span class="team-emoji">🧭</span><span>nomad</span></span>
+              <span class="team-buddy buddy-5"><span class="team-emoji">🌈</span><span>windy</span></span>
+              <span class="team-buddy buddy-6"><span class="team-emoji">🍋</span><span>柠檬</span></span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="wallet-card">
+          <div class="wallet-topline">
+            <span>钱包</span>
+            <span class="wallet-pill" id="wallet-status">未连接</span>
+          </div>
+          <button class="pixel-button pixel-button--sun" id="connect-wallet" type="button">连接 MetaMask</button>
+          <button class="pixel-button pixel-button--ghost" id="disconnect-wallet" type="button">退出钱包</button>
+          <p class="wallet-note" id="wallet-note">
+            请使用 MetaMask 并切换到 Avalanche Fuji Testnet
+          </p>
+          <p class="wallet-helper">
+            合约地址
+            <strong id="contract-address-text">请在配置中填写</strong>
+          </p>
+        </aside>
+      </section>
+
+      <section class="stats-grid" aria-label="玩家状态">
+        <article class="stat-card stat-card--gold">
+          <p class="stat-label">金币</p>
+          <strong class="stat-value" id="coin-count">10</strong>
+        </article>
+        <article class="stat-card stat-card--clay">
+          <p class="stat-label">举报次数</p>
+          <strong class="stat-value" id="report-count">0</strong>
+        </article>
+        <article class="stat-card stat-card--leaf">
+          <p class="stat-label">识别</p>
+          <strong class="stat-value" id="cigarette-count">0</strong>
+        </article>
+        <article class="stat-card stat-card--pond">
+          <p class="stat-label">攻击力</p>
+          <strong class="stat-value" id="hit-power">0</strong>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="main-column">
+          <section class="control-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">举报</p>
+                <h2>上传举报照片并识别烟头</h2>
+              </div>
+              <div class="notice-box">
+                <strong id="scan-status">等待上传</strong>
+                <span id="status-copy">上传照片后开始识别。</span>
+              </div>
+            </div>
+
+            <div class="scan-grid">
+              <button class="upload-zone" id="upload-zone" type="button">
+                <input id="photo-input" type="file" accept="image/*" />
+                <img id="photo-preview" alt="举报照片预览" />
+                <span class="upload-empty">
+                  <strong>点击上传举报照片</strong>
+                  <small>可以是手上的烟头，也可以是地板上的烟头。</small>
+                </span>
+              </button>
+
+              <div class="result-card">
+                <p class="mini-label">识别结果</p>
+                <h3 id="result-text">还没有识别结果。</h3>
+                <div class="result-metrics">
+                  <p>
+                    <span>结果</span>
+                    <strong id="evidence-label">等待上传</strong>
+                  </p>
+                  <p>
+                    <span>奖励</span>
+                    <strong id="reward-coins">0 金币</strong>
+                  </p>
+                </div>
+                <p class="reward-signal" id="reward-signal">识别完成后显示奖励结果。</p>
+                <button class="pixel-button pixel-button--leaf" id="analyze-photo" type="button">开始识别</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="arena-panel">
+            <div class="section-heading section-heading--tight">
+              <div>
+                <p class="eyebrow">战斗</p>
+                <h2>烟雾怪农场战斗</h2>
+              </div>
+              <div class="score-card">
+                <div class="score-pill leaf">
+                  <span class="label">本轮</span>
+                  <span class="value" id="session-hits">0</span>
+                </div>
+                <div class="score-pill gold">
+                  <span class="label">总驱散</span>
+                  <span class="value" id="total-hits">0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="arena-scene">
+              <div class="scene-sun"></div>
+              <div class="scene-cloud left"></div>
+              <div class="scene-cloud right"></div>
+              <div class="scene-tree left"></div>
+              <div class="scene-tree right"></div>
+              <div class="scene-bush left"></div>
+              <div class="scene-bush right"></div>
+              <div class="scene-flower l1"></div>
+              <div class="scene-flower l2"></div>
+              <div class="scene-flower r1"></div>
+              <div class="scene-flower r2"></div>
+              <div class="scene-hero no-weapon" id="scene-hero" aria-label="净化护法">
+                <span class="eye l"></span>
+                <span class="eye r"></span>
+                <span class="blush l"></span>
+                <span class="blush r"></span>
+                <span class="mouth"></span>
+                <span class="arm">
+                  <span class="weapon-visual leaf-weapon" aria-hidden="true"></span>
+                </span>
+              </div>
+            </div>
+
+            <div class="arena-footer">
+              <div class="level-row">
+                <span id="level-label">等级：新手驱邪师</span>
+                <span id="level-progress">0 / 5</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="level-fill"></div>
+              </div>
+              <div class="badges-row" id="badges-row">
+                <span class="badge-chip" data-milestone="5">5 次</span>
+                <span class="badge-chip" data-milestone="15">15 次</span>
+                <span class="badge-chip" data-milestone="30">30 次</span>
+                <span class="badge-chip" data-milestone="60">60 次</span>
+                <span class="badge-chip" data-milestone="100">100 次</span>
+              </div>
+              <div class="equip-row">
+                <span class="equip-chip" aria-hidden="true"></span>
+                <span>当前装备 · <strong id="equipped-item">未装备</strong></span>
+              </div>
+              <div class="inventory-panel">
+                <p class="mini-label">当前背包</p>
+                <div class="inventory-balance-grid">
+                  <div class="inventory-balance-card">
+                    <span>普通柚子叶</span>
+                    <strong id="arena-leaf-count">0</strong>
+                  </div>
+                  <div class="inventory-balance-card">
+                    <span>超级柚子喷雾</span>
+                    <strong id="arena-spray-count">0</strong>
+                  </div>
+                </div>
+              </div>
+              <button class="attack-button" id="hit-monster" type="button" disabled>
+                <span class="equip-chip" aria-hidden="true"></span>
+                <span id="attack-copy">先装备道具</span>
+              </button>
+              <p class="hint">装备后才能净化烟雾怪。</p>
+            </div>
+          </section>
+        </div>
+
+        <aside class="shop-panel">
+          <div class="section-heading section-heading--tight">
+            <div>
+              <p class="eyebrow">商店</p>
+              <h2>购买净化道具</h2>
+            </div>
+            <div class="shop-chip" id="treasury-count">金库 0</div>
+          </div>
+
+          <p class="shop-intro">
+            购买会调用钱包交易，并同步游戏余额。
+          </p>
+
+          <div class="shop-list">
+            <article class="shop-card" data-item="pomelo-leaf">
+              <div class="shop-copy">
+                <p class="shop-name">普通柚子叶</p>
+                <p class="shop-note">基础净化道具，轻巧顺手，适合第一次打怪。</p>
+              </div>
+              <div class="shop-meta">
+                <span>3 金币</span>
+                <span>攻击力 3</span>
+                <span>背包 <strong id="leaf-count">0</strong></span>
+              </div>
+              <div class="button-list">
+                <button class="pixel-button pixel-button--leaf buy-button" type="button">购买</button>
+                <button class="pixel-button equip-button" data-equip="pomelo-leaf" type="button">装备</button>
+              </div>
+            </article>
+
+            <article class="shop-card" data-item="super-spray">
+              <div class="shop-copy">
+                <p class="shop-name">超级柚子喷雾</p>
+                <p class="shop-note">高能净化喷雾，一喷见效，适合把烟雾怪轰远一点。</p>
+              </div>
+              <div class="shop-meta">
+                <span>5 金币</span>
+                <span>攻击力 5</span>
+                <span>背包 <strong id="spray-count">0</strong></span>
+              </div>
+              <div class="button-list">
+                <button class="pixel-button pixel-button--gold buy-button" type="button">购买</button>
+                <button class="pixel-button equip-button" data-equip="super-spray" type="button">装备</button>
+              </div>
+            </article>
+          </div>
+
+          <div class="handoff-panel">
+            <p class="mini-label">交接状态</p>
+            <strong id="payment-status">等待玩家购买</strong>
+            <span id="item-status">等待装备道具。</span>
+            <p id="handoff-message">选择一个道具开始。</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <strong id="toast-title">提示</strong>
+      <span id="toast-text">状态更新</span>
+    </div>
+
+    <div class="dice-modal" id="dice-modal" aria-hidden="true">
+      <div class="dice-modal__backdrop"></div>
+      <div class="dice-modal__card" role="dialog" aria-modal="true" aria-labelledby="dice-title">
+        <p class="dice-modal__eyebrow">奖励骰子</p>
+        <h3 class="dice-modal__title" id="dice-title">掷出你的金币点数</h3>
+        <div class="dice-box rolling" id="dice-box">
+          <strong id="dice-value">?</strong>
+        </div>
+        <p class="dice-modal__text" id="dice-text">正在摇动骰子...</p>
+      </div>
+    </div>
+
+    <script src="./config.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>

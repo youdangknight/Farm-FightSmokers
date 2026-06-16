@@ -1,0 +1,16 @@
+.DS_Store
+*.log
+
+node_modules/
+dist/
+coverage/
+
+.env
+.env.*
+!.env.example
+
+uploads/
+.vite/
+
+smoke-quest-ui/config.js
+smart contract and wallet/config.js

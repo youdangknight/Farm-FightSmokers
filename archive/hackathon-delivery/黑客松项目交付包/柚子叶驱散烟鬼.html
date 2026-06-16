@@ -1,0 +1,457 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  #game-root {
+    min-height: 580px;
+    background: linear-gradient(180deg, #0a1a0a 0%, #0d2a10 40%, #0a1a0a 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    font-family: 'Noto Sans SC', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+
+  #stars {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  }
+
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: rgba(200,255,180,0.5);
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+  }
+
+  @keyframes twinkle {
+    0%,100% { opacity: 0.3; } 50% { opacity: 1; }
+  }
+
+  #top-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px 8px;
+    z-index: 10;
+    position: relative;
+  }
+
+  .stat-block {
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: rgba(160,220,150,0.7);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #7dff6a;
+    font-family: 'Noto Serif SC', serif;
+    text-shadow: 0 0 12px rgba(100,255,80,0.5);
+    transition: transform 0.15s;
+  }
+
+  .stat-value.pop {
+    transform: scale(1.35);
+  }
+
+  #title-area {
+    z-index: 10;
+    text-align: center;
+    padding: 2px 0 0;
+  }
+
+  #title-area h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    color: rgba(180,240,160,0.9);
+    font-weight: 400;
+    letter-spacing: 2px;
+  }
+
+  #arena {
+    position: relative;
+    width: 340px;
+    height: 260px;
+    margin: 10px auto 0;
+    z-index: 5;
+  }
+
+  #leaf-btn {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 88px; height: 88px;
+    background: radial-gradient(circle at 35% 35%, #5adf40, #2a8a1a);
+    border-radius: 50% 10% 50% 10%;
+    border: 2.5px solid rgba(150,255,120,0.6);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px;
+    box-shadow: 0 0 20px rgba(80,200,60,0.4), inset 0 2px 6px rgba(255,255,255,0.2);
+    transition: transform 0.08s, box-shadow 0.08s;
+    z-index: 20;
+  }
+
+  #leaf-btn:active, #leaf-btn.smack {
+    transform: translate(-50%,-50%) scale(0.88) rotate(-15deg);
+    box-shadow: 0 0 35px rgba(120,255,80,0.8), inset 0 2px 6px rgba(255,255,255,0.3);
+  }
+
+  .leaf-vein {
+    position: absolute;
+    background: rgba(255,255,255,0.25);
+    pointer-events: none;
+  }
+
+  .ghost {
+    position: absolute;
+    width: 48px; height: 48px;
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer;
+    z-index: 15;
+    animation: float 2s ease-in-out infinite;
+    transition: opacity 0.3s;
+  }
+
+  .ghost-body {
+    font-size: 32px;
+    line-height: 1;
+    filter: drop-shadow(0 0 6px rgba(200,180,100,0.7));
+  }
+
+  .ghost-smoke {
+    font-size: 14px;
+    margin-top: -4px;
+    animation: puff 1.5s ease-in-out infinite;
+    opacity: 0.8;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes puff {
+    0%,100% { opacity: 0.5; transform: translateY(0) scale(1); }
+    50% { opacity: 0.9; transform: translateY(-5px) scale(1.2); }
+  }
+
+  .ghost.flee {
+    animation: flee-anim 0.5s ease-out forwards;
+  }
+
+  @keyframes flee-anim {
+    to { transform: translateY(-60px) scale(0.3) rotate(30deg); opacity: 0; }
+  }
+
+  .hit-effect {
+    position: absolute;
+    pointer-events: none;
+    font-size: 18px;
+    font-weight: 700;
+    color: #afffb0;
+    text-shadow: 0 0 8px rgba(100,255,80,0.8);
+    animation: rise 0.7s ease-out forwards;
+    z-index: 30;
+    white-space: nowrap;
+  }
+
+  @keyframes rise {
+    to { transform: translateY(-40px) scale(0.7); opacity: 0; }
+  }
+
+  .scent-ring {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%,-50%);
+    border-radius: 50%;
+    border: 2px solid rgba(100,220,80,0.5);
+    pointer-events: none;
+    animation: expand 0.6s ease-out forwards;
+  }
+
+  @keyframes expand {
+    from { width: 88px; height: 88px; opacity: 0.9; }
+    to { width: 220px; height: 220px; opacity: 0; }
+  }
+
+  #bottom-bar {
+    width: 100%;
+    padding: 10px 18px 14px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #progress-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(60,100,50,0.5);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3aaa30, #7dff6a);
+    border-radius: 3px;
+    transition: width 0.3s;
+    box-shadow: 0 0 8px rgba(100,255,80,0.5);
+  }
+
+  #level-label {
+    font-size: 11px;
+    color: rgba(160,220,150,0.7);
+    letter-spacing: 1px;
+  }
+
+  #milestones {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: rgba(50,100,40,0.5);
+    color: rgba(150,220,130,0.6);
+    border: 0.5px solid rgba(100,180,80,0.3);
+    transition: all 0.3s;
+  }
+
+  .badge.unlocked {
+    background: rgba(80,180,60,0.25);
+    color: #9fffb0;
+    border-color: rgba(120,220,90,0.6);
+    box-shadow: 0 0 8px rgba(80,200,60,0.2);
+  }
+
+  #hint {
+    font-size: 12px;
+    color: rgba(140,200,120,0.6);
+    text-align: center;
+    padding-bottom: 4px;
+  }
+
+  #share-btn {
+    display: none;
+    font-size: 12px;
+    padding: 6px 20px;
+    border-radius: 20px;
+    background: rgba(80,180,60,0.2);
+    color: #9fffb0;
+    border: 1px solid rgba(120,220,90,0.5);
+    cursor: pointer;
+  }
+</style>
+
+<div id="game-root">
+  <div id="stars"></div>
+  
+  <div id="top-bar">
+    <div class="stat-block">
+      <span class="stat-label">总驱散</span>
+      <span class="stat-value" id="total-count">0</span>
+    </div>
+    <div id="title-area">
+      <h1>🍋 柚子叶护法</h1>
+    </div>
+    <div class="stat-block">
+      <span class="stat-label">本轮</span>
+      <span class="stat-value" id="session-count">0</span>
+    </div>
+  </div>
+
+  <div id="arena">
+    <div id="leaf-btn">🍃</div>
+  </div>
+
+  <div id="bottom-bar">
+    <div id="level-label">🌿 等级：新手驱邪师</div>
+    <div id="progress-track">
+      <div id="progress-fill" style="width: 0%"></div>
+    </div>
+    <div id="milestones">
+      <span class="badge" data-at="10">🌱 10次</span>
+      <span class="badge" data-at="50">🌿 50次</span>
+      <span class="badge" data-at="100">🍃 100次</span>
+      <span class="badge" data-at="300">🌳 300次</span>
+      <span class="badge" data-at="500">🏆 宗师</span>
+    </div>
+    <div id="hint">点击柚子叶，驱散烟鬼！</div>
+    <button id="share-btn" onclick="shareScore()">分享成绩 ↗</button>
+  </div>
+</div>
+
+<script>
+const GHOSTS = ['👻','😤','🤢','😈','💀'];
+const SMOKES = ['💨','☁️','🌫️'];
+const LEVELS = [
+  {at:0, name:'新手驱邪师'},
+  {at:10, name:'见习法师'},
+  {at:50, name:'熟练祛秽者'},
+  {at:100, name:'柚叶武士'},
+  {at:300, name:'香气大师'},
+  {at:500, name:'驱鬼宗师'},
+];
+
+let total = parseInt(localStorage.getItem('yuzuTotal')||'0');
+let session = 0;
+let ghosts = [];
+let ghostId = 0;
+
+const totalEl = document.getElementById('total-count');
+const sessionEl = document.getElementById('session-count');
+const arena = document.getElementById('arena');
+const leafBtn = document.getElementById('leaf-btn');
+const progressFill = document.getElementById('progress-fill');
+const levelLabel = document.getElementById('level-label');
+const badges = document.querySelectorAll('.badge');
+
+// Stars
+const starsDiv = document.getElementById('stars');
+for(let i=0;i<30;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  s.style.left=Math.random()*100+'%';
+  s.style.top=Math.random()*100+'%';
+  s.style.animationDelay=Math.random()*2+'s';
+  starsDiv.appendChild(s);
+}
+
+function save(){ 
+  try { localStorage.setItem('yuzuTotal', total); } catch(e){}
+}
+
+function updateUI(){
+  totalEl.textContent = total;
+  sessionEl.textContent = session;
+  totalEl.classList.add('pop');
+  setTimeout(()=>totalEl.classList.remove('pop'),200);
+  sessionEl.classList.add('pop');
+  setTimeout(()=>sessionEl.classList.remove('pop'),200);
+  
+  // level
+  let lv = LEVELS[0];
+  for(const l of LEVELS){ if(total>=l.at) lv=l; }
+  const nextLv = LEVELS[LEVELS.indexOf(lv)+1];
+  levelLabel.textContent = `🌿 等级：${lv.name}`;
+  
+  // progress
+  if(nextLv){
+    const pct = Math.min(100,((total-lv.at)/(nextLv.at-lv.at))*100);
+    progressFill.style.width = pct+'%';
+  } else {
+    progressFill.style.width = '100%';
+  }
+  
+  // badges
+  badges.forEach(b=>{
+    if(total>=parseInt(b.dataset.at)) b.classList.add('unlocked');
+  });
+  
+  // share
+  if(total>=10) document.getElementById('share-btn').style.display='inline-block';
+}
+
+function spawnGhost(){
+  if(ghosts.length >= 5) return;
+  const g = document.createElement('div');
+  g.className = 'ghost';
+  g.id = 'g'+ghostId++;
+  const margin = 60;
+  const maxX = 340 - 48 - margin;
+  const maxY = 260 - 48 - margin;
+  g.style.left = (margin + Math.random()*maxX)+'px';
+  g.style.top = (margin/2 + Math.random()*maxY)+'px';
+  g.style.animationDelay = Math.random()*2+'s';
+  g.innerHTML = `<div class="ghost-body">${GHOSTS[Math.floor(Math.random()*GHOSTS.length)]}</div><div class="ghost-smoke">${SMOKES[Math.floor(Math.random()*SMOKES.length)]}</div>`;
+  
+  g.onclick = (e)=>{ e.stopPropagation(); smiteGhost(g); };
+  arena.appendChild(g);
+  ghosts.push(g.id);
+}
+
+function smiteGhost(g){
+  if(g.classList.contains('flee')) return;
+  g.classList.add('flee');
+  
+  // hit label
+  const msgs = ['驱散！','退退退！','🍃 走你！','净化！','🌿 消散！'];
+  const hl = document.createElement('div');
+  hl.className='hit-effect';
+  hl.textContent=msgs[Math.floor(Math.random()*msgs.length)];
+  hl.style.left=g.style.left;
+  hl.style.top=(parseFloat(g.style.top)-10)+'px';
+  arena.appendChild(hl);
+  setTimeout(()=>hl.remove(),700);
+  
+  total++;
+  session++;
+  save();
+  updateUI();
+  
+  setTimeout(()=>{
+    g.remove();
+    ghosts=ghosts.filter(x=>x!==g.id);
+    setTimeout(spawnGhost,400+Math.random()*600);
+  },500);
+}
+
+function doLeafSmack(){
+  leafBtn.classList.add('smack');
+  setTimeout(()=>leafBtn.classList.remove('smack'),200);
+  
+  // scent ring
+  const ring=document.createElement('div');
+  ring.className='scent-ring';
+  arena.appendChild(ring);
+  setTimeout(()=>ring.remove(),600);
+  
+  // smite all ghosts
+  if(ghosts.length===0){
+    // miss — show hint
+    const hl=document.createElement('div');
+    hl.className='hit-effect';
+    hl.textContent='✨ 清香扩散';
+    hl.style.left='120px'; hl.style.top='80px';
+    arena.appendChild(hl);
+    setTimeout(()=>hl.remove(),700);
+    total++;
+    session++;
+    save();
+    updateUI();
+    return;
+  }
+  [...document.querySelectorAll('.ghost:not(.flee)')].forEach(g=>smiteGhost(g));
+}
+
+leafBtn.onclick = doLeafSmack;
+
+function shareScore(){
+  const msg = `我用柚子叶驱散了${total}次烟鬼！🍃 #柚子叶护法`;
+  if(navigator.share){ navigator.share({text:msg}); }
+  else { navigator.clipboard?.writeText(msg); alert('已复制：'+msg); }
+}
+
+// init
+updateUI();
+spawnGhost();
+spawnGhost();
+setInterval(()=>{ if(ghosts.length<4) spawnGhost(); },2000);
+</script>

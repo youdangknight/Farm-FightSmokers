@@ -1,0 +1,3 @@
+window.FIGHT_SMOKER_CONFIG = {
+  contractAddress: '0x21D490077D62D70c9fd5Db2F40298cc414F0Ac62'
+};

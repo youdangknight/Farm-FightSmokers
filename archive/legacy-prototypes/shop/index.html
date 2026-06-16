@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>神奇道具商场</title>
+  <style>
+    :root {
+      --bg-top: #f7f0d8;
+      --bg-bottom: #d6f0df;
+      --panel: rgba(255, 252, 244, 0.9);
+      --panel-strong: #fff7e8;
+      --text: #244034;
+      --muted: #5e746b;
+      --accent: #ff8f3d;
+      --accent-deep: #db6f24;
+      --leaf: #2f8f5b;
+      --leaf-soft: #dff4e7;
+      --danger: #cc5b42;
+      --shadow: 0 18px 45px rgba(70, 92, 69, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 221, 167, 0.8), transparent 35%),
+        radial-gradient(circle at 85% 18%, rgba(153, 220, 179, 0.72), transparent 25%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0 48px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 18px;
+      padding: 28px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(255, 250, 240, 0.94), rgba(232, 247, 237, 0.9));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -40px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 143, 61, 0.16);
+      filter: blur(4px);
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--leaf);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      line-height: 1.08;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1.02rem;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .wallet-card {
+      background: var(--panel);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .wallet-label {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .wallet-amount {
+      font-size: clamp(1rem, 2.6vw, 1.35rem);
+      font-weight: 800;
+      color: var(--accent-deep);
+      line-height: 1.1;
+    }
+
+    .inventory-card {
+      background: var(--panel);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 12px 16px;
+      display: grid;
+      gap: 8px;
+      min-width: 220px;
+    }
+
+    .inventory-title {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .inventory-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .inventory-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .inventory-name {
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .inventory-count {
+      font-weight: 800;
+      color: var(--accent-deep);
+    }
+
+    .panel,
+    .toast {
+      background: var(--panel);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .ghost-btn,
+    .buy-btn {
+      padding: 12px 18px;
+      font-weight: 700;
+    }
+
+    .ghost-btn {
+      background: white;
+      color: var(--leaf);
+      box-shadow: inset 0 0 0 1px rgba(47, 143, 91, 0.2);
+    }
+
+    .section {
+      margin-top: 28px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .shelf {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .product-card {
+      padding: 22px;
+      display: grid;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-card::before {
+      content: "";
+      position: absolute;
+      inset: -40px auto auto -20px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(47, 143, 91, 0.08);
+    }
+
+    .product-tag {
+      width: fit-content;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--leaf-soft);
+      color: var(--leaf);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .product-title {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .product-desc {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      min-height: 78px;
+    }
+
+    .price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-deep);
+    }
+
+    .buy-btn {
+      background: linear-gradient(135deg, var(--accent), #ffb25e);
+      color: white;
+      box-shadow: 0 12px 20px rgba(255, 143, 61, 0.28);
+    }
+
+    .buy-btn[disabled] {
+      cursor: not-allowed;
+      opacity: 0.5;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .panel {
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 1.08rem;
+    }
+
+    .panel p,
+    .panel li {
+      margin: 0;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+
+    .status-pill {
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #eef7f0;
+      color: var(--leaf);
+      font-weight: 700;
+    }
+
+    .status-pill.warn {
+      background: #fff1eb;
+      color: var(--danger);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: min(360px, calc(100% - 36px));
+      padding: 18px 18px 18px 20px;
+      border-left: 6px solid var(--leaf);
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      z-index: 30;
+    }
+
+    .reward-display {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: min(320px, calc(100% - 40px));
+      padding: 20px;
+      border-radius: 28px;
+      background: rgba(255, 252, 244, 0.97);
+      box-shadow: 0 22px 48px rgba(70, 92, 69, 0.2);
+      transform: translate(-50%, -50%) scale(0.92);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      z-index: 35;
+      text-align: center;
+    }
+
+    .reward-display.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .reward-image {
+      width: 100%;
+      max-width: 220px;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 12px;
+    }
+
+    .reward-name {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--accent-deep);
+    }
+
+    .reward-copy {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .reward-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(36, 64, 52, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+      z-index: 34;
+    }
+
+    .reward-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast h3,
+    .toast p {
+      margin: 0;
+    }
+
+    .toast h3 {
+      margin-bottom: 6px;
+    }
+
+    .toast p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .tiny {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    code {
+      padding: 0.15em 0.4em;
+      border-radius: 8px;
+      background: rgba(47, 143, 91, 0.08);
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 0.95em;
+    }
+
+    @media (max-width: 800px) {
+      .page {
+        width: min(100% - 24px, 1120px);
+        padding-top: 20px;
+      }
+
+      .hero {
+        padding: 22px;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <h1>神奇道具商场</h1>
+        </div>
+        <aside class="wallet-card">
+          <span class="wallet-label">💰 我的钱包</span>
+          <strong class="wallet-amount" id="walletAmount">30 金币</strong>
+        </aside>
+        <aside class="inventory-card">
+          <span class="inventory-title">🎒 已拥有道具</span>
+          <div class="inventory-list">
+            <div class="inventory-item">
+              <span class="inventory-name">普通柚子叶</span>
+              <strong class="inventory-count" id="leafCount">0</strong>
+            </div>
+            <div class="inventory-item">
+              <span class="inventory-name">超级柚子喷雾</span>
+              <strong class="inventory-count" id="sprayCount">0</strong>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shelf" id="shelf"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <h3 id="toastTitle">购买成功</h3>
+    <p id="toastText">你获得了新的道具。</p>
+  </div>
+
+  <div class="reward-backdrop" id="rewardBackdrop"></div>
+  <div class="reward-display" id="rewardDisplay" role="dialog" aria-live="polite" aria-label="获得道具">
+    <img class="reward-image" id="rewardImage" alt="">
+    <h3 class="reward-name" id="rewardName"></h3>
+    <p class="reward-copy" id="rewardCopy"></p>
+  </div>
+
+  <script>
+    const defaultProducts = [
+      {
+        id: "pomelo-leaf",
+        name: "普通柚子叶",
+        price: 10,
+        emoji: "🍃",
+        label: "按钮 A",
+        description: "基础净化道具，出手轻快，适合当场试试手感。",
+        image: "data:image/svg+xml;utf8," + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+            <defs>
+              <linearGradient id="bgLeaf" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#fff7df"/>
+                <stop offset="100%" stop-color="#daf3dd"/>
+              </linearGradient>
+              <linearGradient id="leafMain" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#88d26f"/>
+                <stop offset="100%" stop-color="#2f8f5b"/>
+              </linearGradient>
+            </defs>
+            <rect width="240" height="240" rx="48" fill="url(#bgLeaf)"/>
+            <circle cx="190" cy="52" r="24" fill="#ffe4a8"/>
+            <path d="M119 193c-36-28-62-71-62-102 0-27 18-46 45-46 22 0 40 12 52 30 13-16 30-24 47-24 26 0 42 18 42 42 0 39-34 80-124 100Z" fill="url(#leafMain)"/>
+            <path d="M119 193c-13-51-10-95 12-132" stroke="#e9ffd8" stroke-width="6" stroke-linecap="round" fill="none"/>
+            <path d="M111 111c-16-5-29-15-40-28M139 94c14-8 24-20 31-34M123 135c-15-2-28-8-40-19M136 126c13-7 23-17 32-30" stroke="#e9ffd8" stroke-width="5" stroke-linecap="round" fill="none"/>
+          </svg>
+        `)
+      },
+      {
+        id: "super-spray",
+        name: "超级柚子喷雾",
+        price: 30,
+        emoji: "🫧",
+        label: "按钮 B",
+        description: "高能净化喷雾，一喷见效，适合把二手烟鬼直接轰回老家。",
+        image: "data:image/svg+xml;utf8," + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+            <defs>
+              <linearGradient id="bgSpray" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#fff5df"/>
+                <stop offset="100%" stop-color="#dff6f3"/>
+              </linearGradient>
+              <linearGradient id="bottle" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffe58c"/>
+                <stop offset="100%" stop-color="#ff9f43"/>
+              </linearGradient>
+            </defs>
+            <rect width="240" height="240" rx="48" fill="url(#bgSpray)"/>
+            <circle cx="182" cy="64" r="20" fill="#d7f5ff"/>
+            <circle cx="204" cy="92" r="10" fill="#bdefff"/>
+            <circle cx="165" cy="97" r="8" fill="#effcff"/>
+            <rect x="92" y="47" width="56" height="24" rx="8" fill="#3b5f61"/>
+            <rect x="108" y="34" width="24" height="19" rx="5" fill="#243f34"/>
+            <path d="M83 74h74v102c0 18-14 32-32 32h-10c-18 0-32-14-32-32V74Z" fill="url(#bottle)"/>
+            <rect x="95" y="89" width="50" height="66" rx="18" fill="#fff3d2" opacity="0.7"/>
+            <path d="M148 60h24c10 0 18 8 18 18v5h-18v-4c0-3-2-5-5-5h-19Z" fill="#3b5f61"/>
+            <path d="M188 81c12 4 21 13 27 25" stroke="#7fd7f7" stroke-width="6" stroke-linecap="round" fill="none"/>
+          </svg>
+        `)
+      }
+    ];
+
+    const initialState = {
+      playerCoins: 30,
+      developerVault: 0,
+      inventory: {
+        "pomelo-leaf": 0,
+        "super-spray": 0
+      },
+      autoCheckout: true,
+      activeRequestId: null,
+      selectedItem: null,
+      paymentStatus: "idle",
+      handoffMessage: "玩家还没下单，小欧正在整理货架。",
+      lastPaymentMessage: "",
+      logs: [
+        "商场已开门：等待玩家挑选道具。"
+      ]
+    };
+
+    const state = structuredClone(initialState);
+
+    const els = {
+      shelf: document.getElementById("shelf"),
+      walletAmount: document.getElementById("walletAmount"),
+      leafCount: document.getElementById("leafCount"),
+      sprayCount: document.getElementById("sprayCount"),
+      toast: document.getElementById("toast"),
+      toastTitle: document.getElementById("toastTitle"),
+      toastText: document.getElementById("toastText"),
+      rewardBackdrop: document.getElementById("rewardBackdrop"),
+      rewardDisplay: document.getElementById("rewardDisplay"),
+      rewardImage: document.getElementById("rewardImage"),
+      rewardName: document.getElementById("rewardName"),
+      rewardCopy: document.getElementById("rewardCopy")
+    };
+
+    let toastTimer = null;
+    let rewardTimer = null;
+    let purchaseRequestSeq = 0;
+
+    function addLog(text) {
+      const timestamp = new Date().toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+      state.logs.unshift("[" + timestamp + "] " + text);
+      state.logs = state.logs.slice(0, 8);
+    }
+
+    function formatCoins(value) {
+      return value + " 金币";
+    }
+
+    function showToast(title, text) {
+      els.toastTitle.textContent = title;
+      els.toastText.textContent = text;
+      els.toast.classList.add("show");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        els.toast.classList.remove("show");
+      }, 2600);
+    }
+
+    function showReward(product) {
+      els.rewardImage.src = product.image;
+      els.rewardImage.alt = product.name;
+      els.rewardName.textContent = product.name;
+      els.rewardCopy.textContent = "购买成功，新的道具已经加入你的手中。";
+      els.rewardBackdrop.classList.add("show");
+      els.rewardDisplay.classList.add("show");
+
+      window.clearTimeout(rewardTimer);
+      rewardTimer = window.setTimeout(() => {
+        hideReward();
+      }, 2600);
+    }
+
+    function hideReward() {
+      els.rewardBackdrop.classList.remove("show");
+      els.rewardDisplay.classList.remove("show");
+    }
+
+    function renderShelf() {
+      els.shelf.innerHTML = "";
+
+      defaultProducts.forEach((product) => {
+        const enoughMoney = state.playerCoins >= product.price;
+        const card = document.createElement("article");
+        card.className = "panel product-card";
+
+        const tag = document.createElement("div");
+        tag.className = "product-tag";
+        tag.textContent = product.label;
+
+        const title = document.createElement("h2");
+        title.className = "product-title";
+        title.textContent = product.emoji + " " + product.name;
+
+        const desc = document.createElement("p");
+        desc.className = "product-desc";
+        desc.textContent = product.description;
+
+        const price = document.createElement("div");
+        price.className = "price";
+        price.textContent = "售价：" + formatCoins(product.price);
+
+        const btn = document.createElement("button");
+        btn.className = "buy-btn";
+        btn.type = "button";
+        btn.disabled = state.paymentStatus === "processing";
+        btn.textContent = enoughMoney ? "购买这件道具" : "金币不够，先等等";
+        btn.addEventListener("click", () => {
+          requestPurchase(product.id);
+        });
+
+        card.append(tag, title, desc, price, btn);
+        els.shelf.appendChild(card);
+      });
+    }
+
+    function render() {
+      els.walletAmount.textContent = formatCoins(state.playerCoins);
+      els.leafCount.textContent = String(state.inventory["pomelo-leaf"]);
+      els.sprayCount.textContent = String(state.inventory["super-spray"]);
+      renderShelf();
+    }
+
+    function dispatchGameEvent(name, detail) {
+      window.dispatchEvent(new CustomEvent(name, { detail }));
+    }
+
+    function getProductById(productId) {
+      return defaultProducts.find((item) => item.id === productId) || null;
+    }
+
+    function requestPurchase(productId) {
+      const product = getProductById(productId);
+      if (!product) {
+        return;
+      }
+
+      const requestId = "purchase-" + (++purchaseRequestSeq);
+      state.paymentStatus = "processing";
+      state.activeRequestId = requestId;
+      addLog("玩家点击购买「" + product.name + "」，小欧开始找 Lae 结账。");
+      render();
+
+      dispatchGameEvent("mall:purchase-request", {
+        requestId,
+        product,
+        playerCoins: state.playerCoins,
+        developerVault: state.developerVault
+      });
+
+      if (!state.autoCheckout) {
+        return;
+      }
+
+      window.setTimeout(() => {
+        if (state.activeRequestId !== requestId || state.paymentStatus !== "processing") {
+          return;
+        }
+
+        if (state.playerCoins >= product.price) {
+          completePurchase(productId, {
+            requestId,
+            paymentMessage: "付款成功，开发者已收款 " + product.price + " 币！"
+          });
+        } else {
+          failPurchase(productId, {
+            requestId,
+            reason: "金币不够，暂时买不了「" + product.name + "」。"
+          });
+        }
+      }, 550);
+    }
+
+    function completePurchase(productId, options = {}) {
+      const product = getProductById(productId);
+      if (!product) {
+        return;
+      }
+
+      if (
+        options.requestId &&
+        state.activeRequestId &&
+        options.requestId !== state.activeRequestId
+      ) {
+        return;
+      }
+
+      if (state.paymentStatus !== "processing") {
+        return;
+      }
+
+      if (state.playerCoins < product.price) {
+        failPurchase(productId, {
+          requestId: options.requestId,
+          reason: "Lae 复核后发现余额不足，付款未通过。"
+        });
+        return;
+      }
+
+      state.playerCoins -= product.price;
+      state.developerVault += product.price;
+      state.inventory[product.id] += 1;
+      state.selectedItem = product;
+      state.paymentStatus = "success";
+      state.activeRequestId = null;
+      state.lastPaymentMessage = options.paymentMessage || "付款成功，开发者也收到钱了！";
+      state.handoffMessage = "玩家买了一个" + product.name + "，Norman 接住！";
+
+      addLog("Lae 回复：「" + state.lastPaymentMessage + "」");
+      addLog("小欧交货完成：已把「" + product.name + "」递给 Norman。");
+
+      dispatchGameEvent("mall:purchase-success", {
+        requestId: options.requestId || null,
+        product,
+        playerCoins: state.playerCoins,
+        developerVault: state.developerVault,
+        handoffMessage: state.handoffMessage
+      });
+
+      showToast("购买成功", "你获得了「" + product.name + "」。");
+      showReward(product);
+      render();
+    }
+
+    function failPurchase(productId, options = {}) {
+      const product = getProductById(productId);
+
+      if (
+        options.requestId &&
+        state.activeRequestId &&
+        options.requestId !== state.activeRequestId
+      ) {
+        return;
+      }
+
+      state.paymentStatus = "failed";
+      state.activeRequestId = null;
+      state.lastPaymentMessage = "";
+      addLog("这次购买失败：" + (options.reason || "Lae 没有确认付款成功。"));
+
+      dispatchGameEvent("mall:purchase-failed", {
+        requestId: options.requestId || null,
+        product,
+        playerCoins: state.playerCoins,
+        developerVault: state.developerVault,
+        reason: options.reason || "付款失败"
+      });
+
+      showToast("购买失败", options.reason || "金币不够，先去第二区赚点钱吧。");
+      render();
+    }
+
+    function resetDemo() {
+      Object.assign(state, structuredClone(initialState));
+      hideReward();
+      addLog("演示状态已重置。");
+      render();
+    }
+
+    els.rewardBackdrop.addEventListener("click", hideReward);
+
+    window.mallGame = {
+      setCoins(value) {
+        if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+          state.playerCoins = Math.floor(value);
+          state.paymentStatus = "idle";
+          state.activeRequestId = null;
+          addLog("Wendy 更新了玩家钱包，当前余额为 " + formatCoins(state.playerCoins) + "。");
+          render();
+        }
+      },
+      setAutoCheckout(enabled) {
+        state.autoCheckout = Boolean(enabled);
+      },
+      completePurchase,
+      failPurchase,
+      getState() {
+        return structuredClone({
+          playerCoins: state.playerCoins,
+          developerVault: state.developerVault,
+          inventory: structuredClone(state.inventory),
+          autoCheckout: state.autoCheckout,
+          activeRequestId: state.activeRequestId,
+          selectedItem: state.selectedItem,
+          paymentStatus: state.paymentStatus,
+          handoffMessage: state.handoffMessage,
+          lastPaymentMessage: state.lastPaymentMessage
+        });
+      },
+      resetDemo
+    };
+
+    render();
+  </script>
+</body>
+</html>
